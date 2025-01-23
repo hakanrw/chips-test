@@ -17,7 +17,7 @@
 #include "chips/clk.h"
 #include "chips/mc6847.h"
 #include "chips/mc6800.h"
-#include "chips/m6526.h"
+#include "chips/mc6821.h"
 #include "systems/mp1000.h"
 #include "mp1000-roms.h"
 #include <locale.h>
@@ -150,10 +150,12 @@ int main(int argc, char* argv[]) {
     keypad(stdscr, TRUE);
     attron(A_BOLD);
 
+    int speed = FRAME_USEC;
+
     // run the emulation/input/render loop
     while (!quit_requested) {
         // tick the emulator for 1 frame
-        mp1000_exec(&mp1000, FRAME_USEC);
+        mp1000_exec(&mp1000, speed);
 
         // keyboard input
         int ch = getch();
@@ -166,6 +168,9 @@ int main(int argc, char* argv[]) {
                 case 261: ch = 0x09; break; // RIGHT
                 case 259: ch = 0x0B; break; // UP
                 case 258: ch = 0x0A; break; // DOWN
+                case 'b': speed = 0; break;
+                case 'n': speed = 1900000.0f/894750; break;
+                case 'm': speed = 30000000.0f/894750; break;
             }
             if (ch > 32) {
                 if (islower(ch)) {
@@ -180,6 +185,7 @@ int main(int argc, char* argv[]) {
                 mp1000_key_up(&mp1000, ch);
             }
         }
+
         // render the PETSCII buffer
         int cur_color_pair = -1;
         //int bg = c64.vic.gunit.bg[0] & 0xF;
@@ -228,6 +234,30 @@ int main(int argc, char* argv[]) {
                     //}
             }
         }
+
+        char pcbuf[32];
+        char spbuf[32];
+        char abuf[32];
+        char bbuf[32];
+        char xbuf[32];
+        char spval[32];
+
+
+        snprintf(pcbuf, sizeof(pcbuf), "PC: %4x", mp1000.cpu.PC);
+        snprintf(spbuf, sizeof(spbuf), "SP: %4x", mp1000.cpu.SP);
+        snprintf(spval, sizeof(spval), "[SP]: %2x%2x", mem_rd(&mp1000.mem_cpu, mp1000.cpu.SP+1), mem_rd(&mp1000.mem_cpu, mp1000.cpu.SP+2));
+        snprintf(abuf, sizeof(abuf), "A: %2x", mp1000.cpu.A);
+        snprintf(bbuf, sizeof(bbuf), "B: %2x", mp1000.cpu.B);
+        snprintf(xbuf, sizeof(xbuf), "X: %4x", mp1000.cpu.IX);
+
+
+        mvaddstr(4, 80, pcbuf);
+        mvaddstr(5, 80, spbuf);
+        mvaddstr(6, 80, spval);
+        mvaddstr(7, 80, abuf);
+        mvaddstr(8, 80, bbuf);
+        mvaddstr(9, 80, xbuf);
+
         refresh();
         //fprintf(stderr, "c->PC: %x\n", mp1000.cpu.PC);
 
