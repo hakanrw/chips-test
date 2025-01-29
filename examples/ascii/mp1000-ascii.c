@@ -99,25 +99,6 @@ static char* unicode_map2[16] = {
   "█"    // 1111: All quadrants
 };
 
-
-static char* unicode_chars[] = {
-    "\xE2\x96\x97", // U+2597: ▗
-    "\xE2\x96\x96", // U+2596: ▖
-    "\xE2\x96\x84", // U+2584: ▄
-    "\xE2\x96\x9D", // U+259D: ▝
-    "\xE2\x96\x90", // U+2590: ▐
-    "\xE2\x96\x9E", // U+259E: ▞
-    "\xE2\x96\x9F", // U+259F: ▟
-    "\xE2\x96\x98", // U+2598: ▘
-    "\xE2\x96\x9A", // U+259A: ▚
-    "\xE2\x96\x8C", // U+258C: ▌
-    "\xE2\x96\x99", // U+2599: ▙
-    "\xE2\x96\x80", // U+2580: ▀
-    "\xE2\x96\x9C", // U+259C: ▜
-    "\xE2\x96\x9B", // U+259B: ▛
-    "\xE2\x96\x88"  // U+2588: █
-};
-
 static void init_mp1000_colors(void) {
     start_color();
     for (int fg = 0; fg < 16; fg++) {
@@ -133,6 +114,9 @@ int main(int argc, char* argv[]) {
     mp1000_init(&mp1000, &(mp1000_desc_t){
         .roms = {
             .bios = { .ptr=dump_mp1000_bios_rom, .size=sizeof(dump_mp1000_bios_rom) },
+            .basic = { .ptr=dump_mp1000_basic68_rom, .size=sizeof(dump_mp1000_basic68_rom) },
+            .cart = { .ptr=dump_mp1000_basic80_rom, .size=sizeof(dump_mp1000_basic80_rom) },
+//            .cart = { .ptr=dump_mp1000_mblock_rom, .size=sizeof(dump_mp1000_mblock_rom) },
         }
     });
 
@@ -151,11 +135,13 @@ int main(int argc, char* argv[]) {
     attron(A_BOLD);
 
     int speed = FRAME_USEC;
+    int frames = 0;
 
     // run the emulation/input/render loop
     while (!quit_requested) {
         // tick the emulator for 1 frame
         mp1000_exec(&mp1000, speed);
+        frames++;
 
         // keyboard input
         int ch = getch();
@@ -168,9 +154,9 @@ int main(int argc, char* argv[]) {
                 case 261: ch = 0x09; break; // RIGHT
                 case 259: ch = 0x0B; break; // UP
                 case 258: ch = 0x0A; break; // DOWN
-                case 'b': speed = 0; break;
-                case 'n': speed = 1900000.0f/894750; break;
-                case 'm': speed = 30000000.0f/894750; break;
+                case ']': speed = 0; break;
+                case '\'': speed = 1900000.0f/894750; break;
+                case '/': speed = 30000000.0f/894750; break;
             }
             if (ch > 32) {
                 if (islower(ch)) {
@@ -240,16 +226,27 @@ int main(int argc, char* argv[]) {
         char abuf[32];
         char bbuf[32];
         char xbuf[32];
+        char irbuf[32];
         char spval[32];
+        char fbuf[32];
+        char a4buf1[32];
+        char a4buf2[32];
+        char a4buf3[32];
+        char a4buf4[32];
 
+        snprintf(pcbuf, sizeof(pcbuf), "PC: %04x", mp1000.cpu.PC);
+        snprintf(spbuf, sizeof(spbuf), "SP: %04x", mp1000.cpu.SP);
+        snprintf(spval, sizeof(spval), "[SP]: %02x%02x", mem_rd(&mp1000.mem_cpu, mp1000.cpu.SP+1), mem_rd(&mp1000.mem_cpu, mp1000.cpu.SP+2));
+        snprintf(abuf, sizeof(abuf), "A: %02x", mp1000.cpu.A);
+        snprintf(bbuf, sizeof(bbuf), "B: %02x", mp1000.cpu.B);
+        snprintf(xbuf, sizeof(xbuf), "X: %04x", mp1000.cpu.IX);
+        snprintf(irbuf, sizeof(irbuf), "IR: %04x", mp1000.cpu.IR);
+        snprintf(fbuf, sizeof(fbuf), "F: %4d", frames);
 
-        snprintf(pcbuf, sizeof(pcbuf), "PC: %4x", mp1000.cpu.PC);
-        snprintf(spbuf, sizeof(spbuf), "SP: %4x", mp1000.cpu.SP);
-        snprintf(spval, sizeof(spval), "[SP]: %2x%2x", mem_rd(&mp1000.mem_cpu, mp1000.cpu.SP+1), mem_rd(&mp1000.mem_cpu, mp1000.cpu.SP+2));
-        snprintf(abuf, sizeof(abuf), "A: %2x", mp1000.cpu.A);
-        snprintf(bbuf, sizeof(bbuf), "B: %2x", mp1000.cpu.B);
-        snprintf(xbuf, sizeof(xbuf), "X: %4x", mp1000.cpu.IX);
-
+        snprintf(a4buf1, sizeof(a4buf1), "%02x %02x %02x %02x %02x %02x %02x %02x", mem_rd(&mp1000.mem_cpu, 0xA400),mem_rd(&mp1000.mem_cpu, 0xA401),mem_rd(&mp1000.mem_cpu, 0xA402),mem_rd(&mp1000.mem_cpu, 0xA403),mem_rd(&mp1000.mem_cpu, 0xA404),mem_rd(&mp1000.mem_cpu, 0xA405),mem_rd(&mp1000.mem_cpu, 0xA406),mem_rd(&mp1000.mem_cpu, 0xA407));
+        snprintf(a4buf2, sizeof(a4buf2), "%02x %02x %02x %02x %02x %02x %02x %02x", mem_rd(&mp1000.mem_cpu, 0xA408),mem_rd(&mp1000.mem_cpu, 0xA409),mem_rd(&mp1000.mem_cpu, 0xA40A),mem_rd(&mp1000.mem_cpu, 0xA40B),mem_rd(&mp1000.mem_cpu, 0xA40C),mem_rd(&mp1000.mem_cpu, 0xA40D),mem_rd(&mp1000.mem_cpu, 0xA40E),mem_rd(&mp1000.mem_cpu, 0xA40F));
+        snprintf(a4buf3, sizeof(a4buf3), "%02x %02x %02x %02x %02x %02x %02x %02x", mem_rd(&mp1000.mem_cpu, 0xA410),mem_rd(&mp1000.mem_cpu, 0xA411),mem_rd(&mp1000.mem_cpu, 0xA412),mem_rd(&mp1000.mem_cpu, 0xA413),mem_rd(&mp1000.mem_cpu, 0xA414),mem_rd(&mp1000.mem_cpu, 0xA415),mem_rd(&mp1000.mem_cpu, 0xA416),mem_rd(&mp1000.mem_cpu, 0xA417));
+        snprintf(a4buf4, sizeof(a4buf4), "%02x %02x %02x %02x %02x %02x %02x %02x", mem_rd(&mp1000.mem_cpu, 0xA418),mem_rd(&mp1000.mem_cpu, 0xA419),mem_rd(&mp1000.mem_cpu, 0xA41A),mem_rd(&mp1000.mem_cpu, 0xA41B),mem_rd(&mp1000.mem_cpu, 0xA41C),mem_rd(&mp1000.mem_cpu, 0xA41D),mem_rd(&mp1000.mem_cpu, 0xA41E),mem_rd(&mp1000.mem_cpu, 0xA41F));
 
         mvaddstr(4, 80, pcbuf);
         mvaddstr(5, 80, spbuf);
@@ -257,6 +254,12 @@ int main(int argc, char* argv[]) {
         mvaddstr(7, 80, abuf);
         mvaddstr(8, 80, bbuf);
         mvaddstr(9, 80, xbuf);
+        mvaddstr(10, 80, irbuf);
+        mvaddstr(11, 80, fbuf);
+        mvaddstr(13, 80, a4buf1);
+        mvaddstr(14, 80, a4buf2);
+        mvaddstr(15, 80, a4buf3);
+        mvaddstr(16, 80, a4buf4);
 
         refresh();
         //fprintf(stderr, "c->PC: %x\n", mp1000.cpu.PC);

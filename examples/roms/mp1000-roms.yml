@@ -3,3 +3,6 @@ options:
     prefix: dump_
 files:
     - mp1000_bios.rom
+    - mp1000_basic68.rom
+    - mp1000_basic80.rom
+    - mp1000_mblock.rom
