@@ -248,6 +248,18 @@ void app_input(const sapp_event* event) {
                 } else if (islower(c)) {
                     c = toupper(c);
                 }
+                uint8_t m = 0;
+                if (c >= '0' && c <= '9') m = MP1000_LJOY_0 + c - '0';
+                else if (c == 0x08) m = MP1000_LJOY_LEFT;
+                else if (c == 0x09) m = MP1000_LJOY_RIGHT;
+                else if (c == 0x0A) m = MP1000_LJOY_DOWN;
+                else if (c == 0x0B) m = MP1000_LJOY_UP;
+
+                if (m != 0) {
+                    mp1000_key_down(&state.mp1000, m);
+                    mp1000_key_up(&state.mp1000, m);
+                }
+
                 mp1000_key_down(&state.mp1000, c);
                 mp1000_key_up(&state.mp1000, c);
             }

@@ -167,6 +167,18 @@ int main(int argc, char* argv[]) {
                 }
             }
             if (ch < 256) {
+                uint8_t m = 0;
+                if (ch >= '0' && ch <= '9') m = MP1000_LJOY_0 + ch - '0';
+                else if (ch == 0x08) m = MP1000_LJOY_LEFT;
+                else if (ch == 0x09) m = MP1000_LJOY_RIGHT;
+                else if (ch == 0x0A) m = MP1000_LJOY_DOWN;
+                else if (ch == 0x0B) m = MP1000_LJOY_UP;
+
+                if (m != 0) {
+                    mp1000_key_down(&mp1000, m);
+                    mp1000_key_up(&mp1000, m);
+                }
+
                 mp1000_key_down(&mp1000, ch);
                 mp1000_key_up(&mp1000, ch);
             }
