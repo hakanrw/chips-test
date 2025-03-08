@@ -13,17 +13,17 @@
 #include "systems/mp1000.h"
 #include "mp1000-roms.h"
 #if defined(CHIPS_USE_UI)
-    #define UI_DBG_USE_M6502
+    #define UI_DBG_USE_MC6800
     #include "ui.h"
     #include "ui/ui_settings.h"
     #include "ui/ui_chip.h"
     #include "ui/ui_memedit.h"
     #include "ui/ui_memmap.h"
-    #include "ui/ui_dasm.h"
-    #include "ui/ui_dbg.h"
-//    #include "ui/ui_mc6800.h"
-//    #include "ui/ui_mc6821.h"
-//    #include "ui/ui_mc6847.h"
+    //#include "ui/ui_dasm.h"
+    //#include "ui/ui_dbg.h"
+    #include "ui/ui_mc6800.h"
+    #include "ui/ui_mc6821.h"
+    #include "ui/ui_mc6847.h"
     #include "ui/ui_audio.h"
     #include "ui/ui_display.h"
     #include "ui/ui_kbd.h"
@@ -144,6 +144,13 @@ void app_init(void) {
         ui_mp1000_init(&state.ui, &(ui_mp1000_desc_t){
             .mp1000 = &state.mp1000,
             .boot_cb = ui_boot_cb,
+            .snapshot = {
+                .load_cb = ui_load_snapshot,
+                .save_cb = ui_save_snapshot,
+                .empty_slot_screenshot = {
+                    .texture = ui_shared_empty_snapshot_texture(),
+                },
+            }/*,
             .dbg_texture = {
                 .create_cb = ui_create_texture,
                 .update_cb = ui_update_texture,
@@ -155,13 +162,6 @@ void app_init(void) {
                 .stopped_cb = web_dbg_on_stopped,
                 .continued_cb = web_dbg_on_continued,
             },
-            .snapshot = {
-                .load_cb = ui_load_snapshot,
-                .save_cb = ui_save_snapshot,
-                .empty_slot_screenshot = {
-                    .texture = ui_shared_empty_snapshot_texture(),
-                },
-            },
             .dbg_keys = {
                 .cont = { .keycode = simgui_map_keycode(SAPP_KEYCODE_F5), .name = "F5" },
                 .stop = { .keycode = simgui_map_keycode(SAPP_KEYCODE_F5), .name = "F5" },
@@ -169,7 +169,7 @@ void app_init(void) {
                 .step_into = { .keycode = simgui_map_keycode(SAPP_KEYCODE_F7), .name = "F7" },
                 .step_tick = { .keycode = simgui_map_keycode(SAPP_KEYCODE_F8), .name = "F8" },
                 .toggle_breakpoint = { .keycode = simgui_map_keycode(SAPP_KEYCODE_F9), .name = "F9" }
-            }
+            }*/
         });
         ui_mp1000_load_settings(&state.ui, ui_settings());
         ui_load_snapshots_from_storage();
@@ -437,25 +437,25 @@ static void web_boot(void) {
     clock_init();
     mp1000_desc_t desc = mp1000_desc();
     mp1000_init(&state.mp1000, &desc);
-    ui_dbg_reboot(&state.ui.dbg);
+    //ui_dbg_reboot(&state.ui.dbg);
 }
 
 static void web_reset(void) {
     mp1000_reset(&state.mp1000);
-    ui_dbg_reset(&state.ui.dbg);
+    //ui_dbg_reset(&state.ui.dbg);
 }
 
 static void web_dbg_connect(void) {
     gfx_disable_speaker_icon();
     state.dbg.entry_addr = 0xFFFFFFFF;
     state.dbg.exit_addr = 0xFFFFFFFF;
-    ui_dbg_external_debugger_connected(&state.ui.dbg);
+    //ui_dbg_external_debugger_connected(&state.ui.dbg);
 }
 
 static void web_dbg_disconnect(void) {
     state.dbg.entry_addr = 0xFFFFFFFF;
     state.dbg.exit_addr = 0xFFFFFFFF;
-    ui_dbg_external_debugger_disconnected(&state.ui.dbg);
+    //ui_dbg_external_debugger_disconnected(&state.ui.dbg);
 }
 
 static bool web_ready(void) {
@@ -495,33 +495,34 @@ static void web_input(const char* text) {
 }
 
 static void web_dbg_add_breakpoint(uint16_t addr) {
-    ui_dbg_add_breakpoint(&state.ui.dbg, addr);
+    //ui_dbg_add_breakpoint(&state.ui.dbg, addr);
 }
 
 static void web_dbg_remove_breakpoint(uint16_t addr) {
-    ui_dbg_remove_breakpoint(&state.ui.dbg, addr);
+    //ui_dbg_remove_breakpoint(&state.ui.dbg, addr);
 }
 
 static void web_dbg_break(void) {
-    ui_dbg_break(&state.ui.dbg);
+    //ui_dbg_break(&state.ui.dbg);
 }
 
 static void web_dbg_continue(void) {
-    ui_dbg_continue(&state.ui.dbg, false);
+    //ui_dbg_continue(&state.ui.dbg, false);
 }
 
 static void web_dbg_step_next(void) {
-    ui_dbg_step_next(&state.ui.dbg);
+    //ui_dbg_step_next(&state.ui.dbg);
 }
 
 static void web_dbg_step_into(void) {
-    ui_dbg_step_into(&state.ui.dbg);
+    //ui_dbg_step_into(&state.ui.dbg);
 }
 
 static void web_dbg_on_stopped(int stop_reason, uint16_t addr) {
     // stopping on the entry or exit breakpoints always
     // overrides the incoming stop_reason
     int webapi_stop_reason = WEBAPI_STOPREASON_UNKNOWN;
+    /*
     if (state.dbg.entry_addr == state.mp1000.cpu.PC) {
         webapi_stop_reason = WEBAPI_STOPREASON_ENTRY;
     } else if (state.dbg.exit_addr == state.mp1000.cpu.PC) {
@@ -532,7 +533,7 @@ static void web_dbg_on_stopped(int stop_reason, uint16_t addr) {
         webapi_stop_reason = WEBAPI_STOPREASON_STEP;
     } else if (stop_reason == UI_DBG_STOP_REASON_BREAKPOINT) {
         webapi_stop_reason = WEBAPI_STOPREASON_BREAKPOINT;
-    }
+    }*/
     webapi_event_stopped(webapi_stop_reason, addr);
 }
 
@@ -564,6 +565,7 @@ static webapi_cpu_state_t web_dbg_cpu_state(void) {
 }
 
 static void web_dbg_request_disassemly(uint16_t addr, int offset_lines, int num_lines, webapi_dasm_line_t* result) {
+/*
     assert(num_lines > 0);
     ui_dbg_dasm_line_t* lines = calloc((size_t)num_lines, sizeof(ui_dbg_dasm_line_t));
     ui_dbg_disassemble(&state.ui.dbg, &(ui_dbg_dasm_request_t){
@@ -582,6 +584,7 @@ static void web_dbg_request_disassemly(uint16_t addr, int offset_lines, int num_
         memcpy(dst->chars, src->chars, dst->num_chars);
     }
     free(lines);
+*/
 }
 
 static void web_dbg_read_memory(uint16_t addr, int num_bytes, uint8_t* dst_ptr) {

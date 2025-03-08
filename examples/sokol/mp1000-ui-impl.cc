@@ -9,10 +9,14 @@
 #include "chips/mem.h"
 #include "chips/clk.h"
 #include "systems/mp1000.h"
-#define UI_DASM_USE_MC6800
-#define UI_DBG_USE_MC6800
+
+//#define UI_DASM_USE_MC6800
+//#define UI_DBG_USE_MC6800
+//#define UI_DASM_USE_M6502
+//#define UI_DBG_USE_M6502
+
 #define CHIPS_UTIL_IMPL
-#include "util/mc6800dasm.h"
+//#include "util/mc6800dasm.h"
 #define CHIPS_UI_IMPL
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -21,8 +25,8 @@
 #include "ui/ui_chip.h"
 #include "ui/ui_memedit.h"
 #include "ui/ui_memmap.h"
-#include "ui/ui_dasm.h"
-#include "ui/ui_dbg.h"
+//#include "ui/ui_dasm.h"
+//#include "ui/ui_dbg.h"
 #include "ui/ui_mc6800.h"
 #include "ui/ui_mc6821.h"
 #include "ui/ui_mc6847.h"
