@@ -215,7 +215,8 @@ int main(int argc, char* argv[]) {
                         int fg = (font_code >> 4) & 7;
                         color_pair = 16*fg + 0xF + 1;
                     } else {
-                        color_pair = 0x08 + 1;
+                        if (font_code & 64) color_pair = 0x80 + 1;
+                        else color_pair = 0x08 + 1;
                     }
 
                     // get color byte (only lower 4 bits wired)

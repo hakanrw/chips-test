@@ -321,30 +321,21 @@ static void send_keybuf_input(void) {
 static void handle_file_loading(void) {
     fs_dowork();
     const uint32_t load_delay_frames = LOAD_DELAY_FRAMES;
-/*    if (fs_success(FS_CHANNEL_IMAGES) && clock_frame_count_60hz() > load_delay_frames) {
+    if (fs_success(FS_CHANNEL_IMAGES) && clock_frame_count_60hz() > load_delay_frames) {
         bool load_success = false;
         if (fs_ext(FS_CHANNEL_IMAGES, "txt") || fs_ext(FS_CHANNEL_IMAGES, "bas")) {
             load_success = true;
             keybuf_put((const char*)fs_data(FS_CHANNEL_IMAGES).ptr);
-        } else if (fs_ext(FS_CHANNEL_IMAGES, "tap")) {
-            load_success = c64_insert_tape(&state.c64, fs_data(FS_CHANNEL_IMAGES));
         } else if (fs_ext(FS_CHANNEL_IMAGES, "bin") || fs_ext(FS_CHANNEL_IMAGES, "prg") || fs_ext(FS_CHANNEL_IMAGES, "")) {
-            load_success = c64_quickload(&state.c64, fs_data(FS_CHANNEL_IMAGES));
+            load_success = mp1000_insert_cart(&state.mp1000, fs_data(FS_CHANNEL_IMAGES));
         }
         if (load_success) {
             if (clock_frame_count_60hz() > (load_delay_frames + 10)) {
                 gfx_flash_success();
             }
-            if (fs_ext(FS_CHANNEL_IMAGES, "tap")) {
-                c64_tape_play(&state.c64);
-            }
             if (!sargs_exists("debug")) {
                 if (sargs_exists("input")) {
                     keybuf_put(sargs_value("input"));
-                } else if (fs_ext(FS_CHANNEL_IMAGES, "tap")) {
-                    c64_basic_load(&state.c64);
-                } else if (fs_ext(FS_CHANNEL_IMAGES, "prg")) {
-                    c64_basic_run(&state.c64);
                 }
             }
         } else {
@@ -352,7 +343,6 @@ static void handle_file_loading(void) {
         }
         fs_reset(FS_CHANNEL_IMAGES);
     }
-*/
 }
 
 static void draw_status_bar(void) {
