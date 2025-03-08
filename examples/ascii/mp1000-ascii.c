@@ -27,7 +27,7 @@ static mp1000_t mp1000;
 // run the emulator and render-loop at 30fps
 #define FRAME_USEC (33333)
 // border size
-#define BORDER_HORI (5)
+#define BORDER_HORI (4)
 #define BORDER_VERT (3)
 
 // a signal handler for Ctrl-C, for proper cleanup
@@ -42,7 +42,7 @@ static char font_map[65] = "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[x]   !\"#$%&`()*+,-./012
 
 // map C64 color numbers to xterm-256color colors
 static int colors[16] = {
-    71,     // green
+    70,     // green
     185,    // yellow
     18,     // blue
     88,     // red
@@ -51,7 +51,7 @@ static int colors[16] = {
     54,     // purple
     136,    // orange
 
-    16,     // black
+    22,     // dark green
     16,     // black
     16,     // black
     16,     // black
@@ -175,11 +175,24 @@ int main(int argc, char* argv[]) {
         // render the PETSCII buffer
         int cur_color_pair = -1;
         //int bg = c64.vic.gunit.bg[0] & 0xF;
-        for (uint32_t yy = 0; yy < 16; yy++) {
-            for (uint32_t xx = 0; xx < 32; xx++) {
+        for (uint32_t yy = 0; yy < 16+2*BORDER_VERT; yy++) {
+            for (uint32_t xx = 0; xx < 32+2*BORDER_HORI; xx++) {
+                if ((xx < BORDER_HORI) || (xx >= 32+BORDER_HORI) ||
+                    (yy < BORDER_VERT) || (yy >= 16+BORDER_VERT))
+                {
+                    // border area
+                    int color_pair = 0x0F+1;
+                    if (color_pair != cur_color_pair) {
+                        attron(COLOR_PAIR(color_pair));
+                        cur_color_pair = color_pair;
+                    }
+                    mvaddch(yy, xx*2, ' ');
+                    mvaddch(yy, xx*2+1, ' ');
+                }
+                else {
                     // bitmap area (not border)
-                    int x = xx; //- BORDER_HORI;
-                    int y = yy; //- BORDER_VERT;
+                    int x = xx - BORDER_HORI;
+                    int y = yy - BORDER_VERT;
 
                     // get character index
                     uint16_t addr = y*32 + x;
@@ -190,7 +203,7 @@ int main(int argc, char* argv[]) {
                         int fg = (font_code >> 4) & 7;
                         color_pair = 16*fg + 0xF + 1;
                     } else {
-                        color_pair = 0xF0 + 1;
+                        color_pair = 0x08 + 1;
                     }
 
                     // get color byte (only lower 4 bits wired)
@@ -200,10 +213,6 @@ int main(int argc, char* argv[]) {
                         cur_color_pair = color_pair;
                     }
 
-                    // invert upper half of character set
-                    //if (font_code > 127) {
-                    //    attron(A_REVERSE);
-                    //}
                     // padding to get proper aspect ratio
                     // character
                     if (font_code & 128) {
@@ -213,11 +222,7 @@ int main(int argc, char* argv[]) {
                         mvaddch(yy, xx*2, ' ');
                         mvaddch(yy, xx*2+1, chr);
                     }
-
-                    // invert upper half of character set
-                    //if (font_code > 127) {
-                    //    attroff(A_REVERSE);
-                    //}
+                }
             }
         }
 
@@ -248,18 +253,18 @@ int main(int argc, char* argv[]) {
         snprintf(a4buf3, sizeof(a4buf3), "%02x %02x %02x %02x %02x %02x %02x %02x", mem_rd(&mp1000.mem_cpu, 0xA410),mem_rd(&mp1000.mem_cpu, 0xA411),mem_rd(&mp1000.mem_cpu, 0xA412),mem_rd(&mp1000.mem_cpu, 0xA413),mem_rd(&mp1000.mem_cpu, 0xA414),mem_rd(&mp1000.mem_cpu, 0xA415),mem_rd(&mp1000.mem_cpu, 0xA416),mem_rd(&mp1000.mem_cpu, 0xA417));
         snprintf(a4buf4, sizeof(a4buf4), "%02x %02x %02x %02x %02x %02x %02x %02x", mem_rd(&mp1000.mem_cpu, 0xA418),mem_rd(&mp1000.mem_cpu, 0xA419),mem_rd(&mp1000.mem_cpu, 0xA41A),mem_rd(&mp1000.mem_cpu, 0xA41B),mem_rd(&mp1000.mem_cpu, 0xA41C),mem_rd(&mp1000.mem_cpu, 0xA41D),mem_rd(&mp1000.mem_cpu, 0xA41E),mem_rd(&mp1000.mem_cpu, 0xA41F));
 
-        mvaddstr(4, 80, pcbuf);
-        mvaddstr(5, 80, spbuf);
-        mvaddstr(6, 80, spval);
-        mvaddstr(7, 80, abuf);
-        mvaddstr(8, 80, bbuf);
-        mvaddstr(9, 80, xbuf);
-        mvaddstr(10, 80, irbuf);
-        mvaddstr(11, 80, fbuf);
-        mvaddstr(13, 80, a4buf1);
-        mvaddstr(14, 80, a4buf2);
-        mvaddstr(15, 80, a4buf3);
-        mvaddstr(16, 80, a4buf4);
+        mvaddstr(4, 86, pcbuf);
+        mvaddstr(5, 86, spbuf);
+        mvaddstr(6, 86, spval);
+        mvaddstr(7, 86, abuf);
+        mvaddstr(8, 86, bbuf);
+        mvaddstr(9, 86, xbuf);
+        mvaddstr(10, 86, irbuf);
+        mvaddstr(11, 86, fbuf);
+        mvaddstr(13, 86, a4buf1);
+        mvaddstr(14, 86, a4buf2);
+        mvaddstr(15, 86, a4buf3);
+        mvaddstr(16, 86, a4buf4);
 
         refresh();
         //fprintf(stderr, "c->PC: %x\n", mp1000.cpu.PC);
