@@ -105,6 +105,7 @@ mp1000_desc_t mp1000_desc() {
             .bios = { .ptr=dump_mp1000_bios_rom, .size=sizeof(dump_mp1000_bios_rom) },
             .basic = { .ptr=dump_mp1000_basic68_rom, .size=sizeof(dump_mp1000_basic68_rom) },
             .cart = { .ptr=dump_mp1000_basic80_rom, .size=sizeof(dump_mp1000_basic80_rom) },
+            //.cart = { .ptr=dump_mp1000_fall_rom, .size=sizeof(dump_mp1000_fall_rom) },
         },
         #if defined(CHIPS_USE_UI)
         .debug = ui_mp1000_get_debug(&state.ui)
@@ -249,14 +250,12 @@ void app_input(const sapp_event* event) {
                     c = toupper(c);
                 }
                 uint8_t m = 0;
-                if (c >= '0' && c <= '9') m = MP1000_LJOY_0 + c - '0';
-                else if (c == 0x08) m = MP1000_LJOY_LEFT;
-                else if (c == 0x09) m = MP1000_LJOY_RIGHT;
-                else if (c == 0x0A) m = MP1000_LJOY_DOWN;
-                else if (c == 0x0B) m = MP1000_LJOY_UP;
+                if (c >= '0' && c <= '9') m = MP1000_RJOY_0 + c - '0';
 
                 if (m != 0) {
+                    mp1000_key_down(&state.mp1000, m+0x10);
                     mp1000_key_down(&state.mp1000, m);
+                    mp1000_key_up(&state.mp1000, m+0x10);
                     mp1000_key_up(&state.mp1000, m);
                 }
 
@@ -288,8 +287,14 @@ void app_input(const sapp_event* event) {
             if (c) {
                 if (event->type == SAPP_EVENTTYPE_KEY_DOWN) {
                     mp1000_key_down(&state.mp1000, c);
+                    if (c == 0x08) mp1000_key_down(&state.mp1000, MP1000_RJOY_LEFT);
+                    if (c == 0x09) mp1000_key_down(&state.mp1000, MP1000_RJOY_RIGHT);
+                    if (c == 0x0D) mp1000_key_down(&state.mp1000, MP1000_RJOY_ENTER);
                 } else {
                     mp1000_key_up(&state.mp1000, c);
+                    if (c == 0x08) mp1000_key_up(&state.mp1000, MP1000_RJOY_LEFT);
+                    if (c == 0x09) mp1000_key_up(&state.mp1000, MP1000_RJOY_RIGHT);
+                    if (c == 0x0D) mp1000_key_up(&state.mp1000, MP1000_RJOY_ENTER);
                 }
             }
             break;
@@ -540,7 +545,7 @@ static void web_dbg_on_reset(void) {
 }
 
 static webapi_cpu_state_t web_dbg_cpu_state(void) {
-    const mc6800_t* cpu = &state.mp1000.cpu;
+    //const mc6800_t* cpu = &state.mp1000.cpu;
     return (webapi_cpu_state_t){
         .items = {/*
             [WEBAPI_CPUSTATE_TYPE] = WEBAPI_CPUTYPE_6502,
